@@ -1,0 +1,205 @@
+#create lexicon table
+CREATE EXTERNAL TABLE if not exists lexicon (
+	type string,
+	len int,
+	word string,
+	pos string,
+	stemmed string,
+	priorpolarity string )
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LOCATION '/temp';
+
+#create polcorpus table (tweets related to political issues)
+CREATE EXTERNAL TABLE if not exists polcorpus (
+	id int,
+	tweet string
+	 )
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LOCATION '/temp';
+#create jobcorpus table (tweets related to job issues)
+CREATE EXTERNAL TABLE if not exists jobcorpus (
+	id int,
+	tweet string
+	 )
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LOCATION '/temp';
+
+#create prcorpus table (tweets related to prices issues)
+CREATE EXTERNAL TABLE if not exists prcorpus (
+	id int,
+	tweet string
+	 )
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LOCATION '/temp';
+
+#create hltcorpus table (tweets related to health issues)
+CREATE EXTERNAL TABLE if not exists hltcorpus (
+	id int,
+	tweet string
+	 )
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LOCATION '/temp';
+
+#create scrcorpus table (tweets related to security issues)
+CREATE EXTERNAL TABLE if not exists scrcorpus (
+	id int,
+	tweet string
+	 )
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LOCATION '/temp';
+
+#toknize tweets
+create view IF NOT EXISTS tokens 
+as select id, words from polcorpus lateral view explode(sentences(lower(tweet))) dummy as words;
+
+create view IF NOT EXISTS wordview as select id, word from tokens 
+lateral view explode( words ) dummy as word;
+
+#rate words in the corpus according to the lexicon
+
+create view IF NOT EXISTS polarity as select
+    wordview.id,
+    wordview.word,
+    case d.priorpolarity
+      when 'negative' then -1
+      when 'positive' then  1
+      else 0 end as polarity
+ from wordview left outer join lexicon d on wordview.word = trim(d.word);
+
+# summing up polarity for each tweet
+create table IF NOT EXISTS sentiment stored as orc as select
+ id,
+  case
+    when sum( polarity ) > 0 then 'positive'
+    when sum( polarity ) < 0 then 'negative'
+    else 'neutral' end as sentiment
+from polarity group by id;
+
+create view pol_totalview as select count(sentiment) as count,
+sentiment from sentiment group by sentiment;
+
+#toknize tweets
+create view IF NOT EXISTS tokens 
+as select id, words from jobcorpus lateral view explode(sentences(lower(tweet))) dummy as words;
+
+create view IF NOT EXISTS wordview as select id, word from tokens 
+lateral view explode( words ) dummy as word;
+
+#rate words in the corpus according to the lexicon
+
+create view IF NOT EXISTS polarity as select
+    wordview.id,
+    wordview.word,
+    case d.priorpolarity
+      when 'negative' then -1
+      when 'positive' then  1
+      else 0 end as polarity
+ from wordview left outer join lexicon d on wordview.word = trim(d.word);
+
+# summing up polarity for each tweet
+create table IF NOT EXISTS sentiment stored as orc as select
+ id,
+  case
+    when sum( polarity ) > 0 then 'positive'
+    when sum( polarity ) < 0 then 'negative'
+    else 'neutral' end as sentiment
+from polarity group by id;
+
+create view job_totalview as select count(sentiment) as count,
+sentiment from sentiment group by sentiment;
+
+#toknize tweets
+create view IF NOT EXISTS tokens 
+as select id, words from prcorpus lateral view explode(sentences(lower(tweet))) dummy as words;
+
+create view IF NOT EXISTS wordview as select id, word from tokens 
+lateral view explode( words ) dummy as word;
+
+#rate words in the corpus according to the lexicon
+
+create view IF NOT EXISTS polarity as select
+    wordview.id,
+    wordview.word,
+    case d.priorpolarity
+      when 'negative' then -1
+      when 'positive' then  1
+      else 0 end as polarity
+ from wordview left outer join lexicon d on wordview.word = trim(d.word);
+
+# summing up polarity for each tweet
+create table IF NOT EXISTS sentiment stored as orc as select
+ id,
+  case
+    when sum( polarity ) > 0 then 'positive'
+    when sum( polarity ) < 0 then 'negative'
+    else 'neutral' end as sentiment
+from polarity group by id;
+
+create view pr_totalview as select count(sentiment) as count,
+sentiment from sentiment group by sentiment;
+
+#toknize tweets
+create view IF NOT EXISTS tokens 
+as select id, words from hltcorpus lateral view explode(sentences(lower(tweet))) dummy as words;
+
+create view IF NOT EXISTS wordview as select id, word from tokens 
+lateral view explode( words ) dummy as word;
+
+#rate words in the corpus according to the lexicon
+
+create view IF NOT EXISTS polarity as select
+    wordview.id,
+    wordview.word,
+    case d.priorpolarity
+      when 'negative' then -1
+      when 'positive' then  1
+      else 0 end as polarity
+ from wordview left outer join lexicon d on wordview.word = trim(d.word);
+
+# summing up polarity for each tweet
+create table IF NOT EXISTS sentiment stored as orc as select
+ id,
+  case
+    when sum( polarity ) > 0 then 'positive'
+    when sum( polarity ) < 0 then 'negative'
+    else 'neutral' end as sentiment
+from polarity group by id;
+
+create view hlt_totalview as select count(sentiment) as count,
+sentiment from sentiment group by sentiment;
+
+#toknize tweets
+create view IF NOT EXISTS tokens 
+as select id, words from seccorpus lateral view explode(sentences(lower(tweet))) dummy as words;
+
+create view IF NOT EXISTS wordview as select id, word from tokens 
+lateral view explode( words ) dummy as word;
+
+#rate words in the corpus according to the lexicon
+
+create view IF NOT EXISTS polarity as select
+    wordview.id,
+    wordview.word,
+    case d.priorpolarity
+      when 'negative' then -1
+      when 'positive' then  1
+      else 0 end as polarity
+ from wordview left outer join lexicon d on wordview.word = trim(d.word);
+
+# summing up polarity for each tweet
+create table IF NOT EXISTS sentiment stored as orc as select
+ id,
+  case
+    when sum( polarity ) > 0 then 'positive'
+    when sum( polarity ) < 0 then 'negative'
+    else 'neutral' end as sentiment
+from polarity group by id;
+
+create view sec_totalview as select count(sentiment) as count,
+sentiment from sentiment group by sentiment;
